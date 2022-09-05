@@ -2,7 +2,7 @@ const express = require('express');
 
 const router = express.Router();
 
-const { findUserById, getAllUsers, postNewUser, updateOwnerProfile, updateOwnerAvatar } = require('../controller/users')
+const { findUserById, getAllUsers, postNewUser, updateOwnerProfile, updateOwnerAvatar } = require('../controllers/users')
 
 router.get('/users', getAllUsers)
 

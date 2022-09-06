@@ -1,27 +1,28 @@
-const Card = require("../models/card.js");
+const Card = require('../models/card');
+const { NOT_FOUND_ERR, BAD_REQUEST_ERR, INTERNAL_SERVER_ERR } = require('../utils/utils');
 
-const getAllCards = async (req, res) => {
+const getAllCards = async (_req, res) => {
   try {
     const cards = await Card.find({});
 
-    res.status(200).send(cards);
+    res.send(cards);
   } catch (e) {
-    res.status(500).send({ message: "Произошла ошибка на сервере", ...e });
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
   }
 };
 
 const deleteCard = async (req, res) => {
   try {
     const id = await Card.findByIdAndRemove(req.params.id);
-    if(!id){
-      res.status(404).send({ message: "Пользователь с данным _id не найден"})
-      return
+    if (!id) {
+      res.status(NOT_FOUND_ERR).send({ message: 'Пользователь с данным _id не найден' });
+      return;
     }
     res.send({
       data: id,
     });
   } catch (e) {
-    res.status(500).send({ message: "Произошла ошибка на сервере", ...e });
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
   }
 };
 
@@ -32,38 +33,54 @@ const postNewCard = async (req, res) => {
     await Card.create({ name, link, owner: req.user._id }, (err, doc) => {
       if (err) {
         res
-          .status(400)
-          .send({ message: "Неверно заполнены данные пользователя" });
+          .status(BAD_REQUEST_ERR)
+          .send({ message: 'Неверно заполнены данные пользователя' });
         return;
       }
-      res.status(200).send({ data: doc });
+      res.send({ data: doc });
     });
   } catch (e) {
-    res.status(500).send({ message: "Произошла ошибка на сервере", ...e });
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
   }
 };
-const likeCard = (req, res) => {
-  Card.findByIdAndUpdate(
-    req.params.cardId,
-    { $addToSet: { likes: req.user._id } },
-    { new: true }
-  ).then((card) => {
-    res.send({
-      data: card,
-    });
-  });
+const likeCard = async (req, res) => {
+  try {
+    await Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $addToSet: { likes: req.user._id } },
+      { new: true },
+      (err, doc) => {
+        if (err) {
+          res
+            .status(BAD_REQUEST_ERR)
+            .send({ message: 'Переданы некорректные данные для постановки лайка' });
+          return;
+        }
+        res.send({ data: doc });
+      },
+    );
+  } catch (e) {
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
+  }
 };
 
-const dislikeCard = (req, res) => {
-  Card.findByIdAndUpdate(
-    req.params.cardId,
-    { $pull: { likes: req.user._id } },
-    { new: true }
-  ).then((card) => {
-    res.send({
-      data: card,
-    });
-  });
+const dislikeCard = async (req, res) => {
+  try {
+    await Card.findByIdAndUpdate(
+      req.params.cardId,
+      { $pull: { likes: req.user._id } },
+      { new: true },
+      (err, doc) => {
+        if (err) {
+          res.status(BAD_REQUEST_ERR).send({ message: 'Переданы некорректные данные для снятия лайка' });
+          return;
+        }
+        res.send({ data: doc });
+      },
+    );
+  } catch (e) {
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
+  }
 };
 
 module.exports = {

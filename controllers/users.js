@@ -1,30 +1,32 @@
-const User = require("../models/user.js");
+const User = require('../models/user');
+const {
+  NOT_FOUND_ERR,
+  BAD_REQUEST_ERR,
+  INTERNAL_SERVER_ERR,
+} = require('../utils/utils');
 
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({});
 
-    res.status(200).send(users);
-
+    res.send(users);
   } catch (e) {
-    res.status(500).send({ message: "Произошла ошибка на сервере", ...e });
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
   }
 };
 
 const findUserById = async (req, res) => {
-
-  try{
+  try {
     const id = await User.findById(req.params.id);
-    if(!id){
-      res.status(404).send({ message: "Пользователь с данным _id не найден"})
-      return
+    if (!id) {
+      res.status(NOT_FOUND_ERR).send({ message: 'Пользователь с данным _id не найден' });
+      return;
     }
-    res.status(200).send({
-    data: id,
-  });
-  }
-  catch (e) {
-    res.status(500).send({ message: "Произошла ошибка на сервере", ...e });
+    res.send({
+      data: id,
+    });
+  } catch (e) {
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
   }
 };
 
@@ -32,15 +34,16 @@ const postNewUser = async (req, res) => {
   const { name, about, avatar } = req.body;
   try {
     await User.create({ name, about, avatar }, (err, doc) => {
-      if(err){
-        res.status(400).send({ message: "Неверно заполнены данные пользователя"})
-        return
+      if (err) {
+        res
+          .status(BAD_REQUEST_ERR)
+          .send({ message: 'Неверно заполнены данные пользователя' });
+        return;
       }
-      res.status(200).send({data: doc})
+      res.send({ data: doc });
     });
-  }
-  catch (e) {
-    res.status(500).send({ message: "Произошла ошибка на сервере", ...e });
+  } catch (e) {
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
   }
 };
 
@@ -49,34 +52,35 @@ const updateOwnerProfile = async (req, res) => {
 
   const id = req.user._id;
 
-  try {const findByIdUser = await User.findByIdAndUpdate(
-    id,
-    {
-      name,
-      about,
-    },
-    {
-      new: true,
-      runValidators: true,
-      upsert: true,
-    }, (err, doc) => {
-      if(err){
-        res.status(400).send({ message: "Неверно заполнены данные пользователя"})
-        return
-      }
-    })
-    if(!findByIdUser){
-      res.status(404).send({ message: "Пользователь с данным _id не найден"})
-      return
+  try {
+    const findByIdUser = await User.findByIdAndUpdate(
+      id,
+      {
+        name,
+        about,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+      (err) => {
+        if (err) {
+          res
+            .status(BAD_REQUEST_ERR)
+            .send({ message: 'Неверно заполнены данные пользователя' });
+        }
+      },
+    );
+    if (!findByIdUser) {
+      res.status(NOT_FOUND_ERR).send({ message: 'Пользователь с данным _id не найден' });
+      return;
     }
-    res.status(200).send({
-    data: findByIdUser,
-  })
+    res.send({
+      data: findByIdUser,
+    });
+  } catch (e) {
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
   }
-  catch (e) {
-    res.status(500).send({ message: "Произошла ошибка на сервере", ...e });
-  }
-
 };
 
 const updateOwnerAvatar = async (req, res) => {
@@ -92,25 +96,24 @@ const updateOwnerAvatar = async (req, res) => {
         runValidators: true,
         upsert: true,
       },
-      (err, doc) => {
-        if(err){
-          res.status(400).send({ message: "Неверно заполнены данные пользователя"})
-          return
+      (err) => {
+        if (err) {
+          res
+            .status(BAD_REQUEST_ERR)
+            .send({ message: 'Неверно заполнены данные пользователя' });
         }
-      }
-    )
-    if(!findByIdAvatar){
-      res.status(404).send({ message: "Пользователь с данным _id не найден"})
-      return
+      },
+    );
+    if (!findByIdAvatar) {
+      res.status(NOT_FOUND_ERR).send({ message: 'Пользователь с данным _id не найден' });
+      return;
     }
-    res.status(200).send({
-    data: findByIdAvatar,
-  })
+    res.send({
+      data: findByIdAvatar,
+    });
+  } catch (e) {
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
   }
-  catch (e) {
-    res.status(500).send({ message: "Произошла ошибка на сервере", ...e });
-  }
-
 };
 
 module.exports = {

@@ -1,7 +1,7 @@
 const Card = require('../models/card');
 const { NOT_FOUND_ERR, BAD_REQUEST_ERR, INTERNAL_SERVER_ERR } = require('../utils/utils');
 
-const getAllCards = async (_req, res) => {
+const getAllCards = async (req, res) => {
   try {
     const cards = await Card.find({});
 
@@ -45,41 +45,48 @@ const postNewCard = async (req, res) => {
 };
 const likeCard = async (req, res) => {
   try {
-    await Card.findByIdAndUpdate(
+    const id = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $addToSet: { likes: req.user._id } },
       { new: true },
-      (err, doc) => {
-        if (err) {
-          res
-            .status(BAD_REQUEST_ERR)
-            .send({ message: 'Переданы некорректные данные для постановки лайка' });
-          return;
-        }
-        res.send({ data: doc });
-      },
     );
+    if (id.owner.toString() !== req.user._id) {
+      res
+        .status(BAD_REQUEST_ERR)
+        .send({ message: 'Переданы некорректные данные для постановки лайка' });
+      return;
+    }
+    res.send({ data: id });
   } catch (e) {
-    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
+    if (e.value) {
+      res.status(NOT_FOUND_ERR).send({ message: 'Пользователь с данным _id не найден' });
+      return;
+    }
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере', ...e });
   }
 };
 
 const dislikeCard = async (req, res) => {
   try {
-    await Card.findByIdAndUpdate(
+    const id = await Card.findByIdAndUpdate(
       req.params.cardId,
       { $pull: { likes: req.user._id } },
+
       { new: true },
-      (err, doc) => {
-        if (err) {
-          res.status(BAD_REQUEST_ERR).send({ message: 'Переданы некорректные данные для снятия лайка' });
-          return;
-        }
-        res.send({ data: doc });
-      },
     );
+    if (id.owner.toString() !== req.user._id) {
+      res
+        .status(BAD_REQUEST_ERR)
+        .send({ message: 'Переданы некорректные данные для постановки лайка' });
+      return;
+    }
+    res.send({ data: id });
   } catch (e) {
-    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
+    if (e.value) {
+      res.status(NOT_FOUND_ERR).send({ message: 'Пользователь с данным _id не найден' });
+      return;
+    }
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере', ...e });
   }
 };
 

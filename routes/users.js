@@ -10,14 +10,14 @@ const {
   updateOwnerAvatar,
 } = require('../controllers/users');
 
-router.get('/users', getAllUsers);
+router.get('/', getAllUsers);
 
-router.get('/users/:id', findUserById);
+router.get('/:id', findUserById);
 
-router.post('/users', express.json(), postNewUser);
+router.post('/', express.json(), postNewUser);
 
-router.patch('/users/me', express.json(), updateOwnerProfile);
+router.patch('/me', express.json(), updateOwnerProfile);
 
-router.patch('/users/me/avatar', express.json(), updateOwnerAvatar);
+router.patch('/me/avatar', express.json(), updateOwnerAvatar);
 
 module.exports = router;

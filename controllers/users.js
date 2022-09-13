@@ -94,7 +94,6 @@ const updateOwnerAvatar = async (req, res) => {
       {
         new: true,
         runValidators: true,
-        upsert: true,
       },
       (err) => {
         if (err) {

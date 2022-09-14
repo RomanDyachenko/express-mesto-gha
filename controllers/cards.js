@@ -50,19 +50,19 @@ const likeCard = async (req, res) => {
       { $addToSet: { likes: req.user._id } },
       { new: true },
     );
-    if (id.owner.toString() !== req.user._id) {
+    if (!id) {
       res
-        .status(BAD_REQUEST_ERR)
-        .send({ message: 'Переданы некорректные данные для постановки лайка' });
+        .status(NOT_FOUND_ERR)
+        .send({ message: 'Пользователь с данным _id не найден' });
       return;
     }
     res.send({ data: id });
   } catch (e) {
-    if (e.value) {
-      res.status(NOT_FOUND_ERR).send({ message: 'Пользователь с данным _id не найден' });
+    if (e.name === 'CastError') {
+      res.status(BAD_REQUEST_ERR).send({ message: 'Переданы некорректные данные для постановки лайка' });
       return;
     }
-    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере', ...e });
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
   }
 };
 
@@ -74,19 +74,19 @@ const dislikeCard = async (req, res) => {
 
       { new: true },
     );
-    if (id.owner.toString() !== req.user._id) {
+    if (!id) {
       res
-        .status(BAD_REQUEST_ERR)
-        .send({ message: 'Переданы некорректные данные для постановки лайка' });
+        .status(NOT_FOUND_ERR)
+        .send({ message: 'Пользователь с данным _id не найден' });
       return;
     }
     res.send({ data: id });
   } catch (e) {
-    if (e.value) {
-      res.status(NOT_FOUND_ERR).send({ message: 'Пользователь с данным _id не найден' });
+    if (e.name === 'CastError') {
+      res.status(BAD_REQUEST_ERR).send({ message: 'Переданы некорректные данные для снятия лайка' });
       return;
     }
-    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере', ...e });
+    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
   }
 };
 

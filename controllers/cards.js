@@ -41,7 +41,6 @@ const postNewCard = async (req, res, next) => {
 
     await Card.create({ name, link, owner: owner._id }, (err, doc) => {
       if (err) {
-        console.log(err)
         throw new BadRequestError('Неверно заполнены данные пользователя');
       }
       res.send({ data: doc });

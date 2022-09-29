@@ -61,7 +61,7 @@ app.use('/cards', auth, celebrate({
   }).unknown(true),
 }), cards);
 
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   const { statusCode = 500, message } = err;
 
   res

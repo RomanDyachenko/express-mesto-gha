@@ -5,16 +5,16 @@ const router = express.Router();
 const {
   findUserById,
   getAllUsers,
-  postNewUser,
   updateOwnerProfile,
   updateOwnerAvatar,
+  getOwnerInfo,
 } = require('../controllers/users');
+
+router.get('/me', express.json(), getOwnerInfo);
 
 router.get('/', getAllUsers);
 
 router.get('/:id', findUserById);
-
-router.post('/', express.json(), postNewUser);
 
 router.patch('/me', express.json(), updateOwnerProfile);
 

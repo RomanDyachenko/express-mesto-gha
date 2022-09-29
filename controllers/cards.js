@@ -1,72 +1,79 @@
+const jwt = require('jsonwebtoken');
 const Card = require('../models/card');
-const { NOT_FOUND_ERR, BAD_REQUEST_ERR, INTERNAL_SERVER_ERR } = require('../utils/utils');
+const NotFoundError = require('../errors/NotFoundError');
+const BadRequestError = require('../errors/BadRequestError');
 
-const getAllCards = async (req, res) => {
+const getAllCards = async (req, res, next) => {
   try {
     const cards = await Card.find({});
 
     res.send(cards);
-  } catch (e) {
-    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
+  } catch (err) {
+    next(err);
   }
 };
 
-const deleteCard = async (req, res) => {
+const deleteCard = async (req, res, next) => {
   try {
-    const id = await Card.findByIdAndRemove(req.params.id);
-    if (!id) {
-      res.status(NOT_FOUND_ERR).send({ message: 'Пользователь с данным _id не найден' });
+    const ownerCookie = jwt.verify(req.cookies.jwt, 'some-secret');
+    const card = await Card.findById(req.params.id);
+    if (!card) {
+      throw new NotFoundError('Пользователь с данным _id не найден');
+    }
+    if (ownerCookie._id !== card.owner) {
+      const id = await Card.findByIdAndRemove(req.params.id);
+      res.send({
+        data: id,
+      });
       return;
     }
-    res.send({
-      data: id,
-    });
-  } catch (e) {
-    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
+    throw new BadRequestError('Нет прав для удаления карточки');
+  } catch (err) {
+    next(err);
   }
 };
 
-const postNewCard = async (req, res) => {
+const postNewCard = async (req, res, next) => {
   try {
     const { name, link } = req.body;
 
-    await Card.create({ name, link, owner: req.user._id }, (err, doc) => {
+    const owner = jwt.verify(req.cookies.jwt, 'some-secret');
+
+    await Card.create({ name, link, owner: owner._id }, (err, doc) => {
       if (err) {
-        res
-          .status(BAD_REQUEST_ERR)
-          .send({ message: 'Неверно заполнены данные пользователя' });
-        return;
+        console.log(err)
+        throw new BadRequestError('Неверно заполнены данные пользователя');
       }
       res.send({ data: doc });
     });
-  } catch (e) {
-    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
+  } catch (err) {
+    next(err);
   }
 };
-const likeCard = async (req, res) => {
+// eslint-disable-next-line consistent-return
+const likeCard = async (req, res, next) => {
+  const owner = jwt.verify(req.cookies.jwt, 'some-secret');
   try {
     const id = await Card.findByIdAndUpdate(
       req.params.cardId,
-      { $addToSet: { likes: req.user._id } },
+      { $addToSet: { likes: owner._id } },
       { new: true },
     );
     if (!id) {
-      res
-        .status(NOT_FOUND_ERR)
-        .send({ message: 'Пользователь с данным _id не найден' });
-      return;
+      throw new NotFoundError('Пользователь с данным _id не найден');
     }
     res.send({ data: id });
-  } catch (e) {
-    if (e.name === 'CastError') {
-      res.status(BAD_REQUEST_ERR).send({ message: 'Переданы некорректные данные для постановки лайка' });
-      return;
+  } catch (err) {
+    if (err.name === 'CastError') {
+      const badRequestError = new BadRequestError('Переданы некорректные данные для постановки лайка');
+      next(badRequestError);
     }
-    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
+    next(err);
   }
 };
 
-const dislikeCard = async (req, res) => {
+// eslint-disable-next-line consistent-return
+const dislikeCard = async (req, res, next) => {
   try {
     const id = await Card.findByIdAndUpdate(
       req.params.cardId,
@@ -75,18 +82,15 @@ const dislikeCard = async (req, res) => {
       { new: true },
     );
     if (!id) {
-      res
-        .status(NOT_FOUND_ERR)
-        .send({ message: 'Пользователь с данным _id не найден' });
-      return;
+      throw new NotFoundError('Пользователь с данным _id не найден');
     }
     res.send({ data: id });
-  } catch (e) {
-    if (e.name === 'CastError') {
-      res.status(BAD_REQUEST_ERR).send({ message: 'Переданы некорректные данные для снятия лайка' });
-      return;
+  } catch (err) {
+    if (err.name === 'CastError') {
+      const badRequestError = new BadRequestError('Переданы некорректные данные для снятия лайка');
+      next(badRequestError);
     }
-    res.status(INTERNAL_SERVER_ERR).send({ message: 'Произошла ошибка на сервере' });
+    next(err);
   }
 };
 

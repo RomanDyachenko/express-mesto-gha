@@ -1,7 +1,7 @@
-const jwt = require('jsonwebtoken');
 const Card = require('../models/card');
 const NotFoundError = require('../errors/NotFoundError');
 const BadRequestError = require('../errors/BadRequestError');
+const ForbiddenError = require('../errors/ForbiddenError');
 
 const getAllCards = async (req, res, next) => {
   try {
@@ -15,47 +15,45 @@ const getAllCards = async (req, res, next) => {
 
 const deleteCard = async (req, res, next) => {
   try {
-    const ownerCookie = jwt.verify(req.cookies.jwt, 'some-secret');
     const card = await Card.findById(req.params.id);
     if (!card) {
       throw new NotFoundError('Пользователь с данным _id не найден');
     }
-    if (ownerCookie._id !== card.owner) {
+    if (req.user._id !== card.owner) {
       const id = await Card.findByIdAndRemove(req.params.id);
       res.send({
         data: id,
       });
       return;
     }
-    throw new BadRequestError('Нет прав для удаления карточки');
+    throw new ForbiddenError('Нет прав для удаления карточки');
   } catch (err) {
     next(err);
   }
 };
 
-const postNewCard = async (req, res, next) => {
-  try {
-    const { name, link } = req.body;
-
-    const owner = jwt.verify(req.cookies.jwt, 'some-secret');
-
-    await Card.create({ name, link, owner: owner._id }, (err, doc) => {
-      if (err) {
-        throw new BadRequestError('Неверно заполнены данные пользователя');
+const postNewCard = (req, res, next) => {
+  const { name, link } = req.body;
+  Card.create({ name, link, owner: req.user._id })
+    .then((card) => {
+      res.send(
+        { data: card },
+      );
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError('Неверно заполнены данные пользователя'));
+      } else {
+        next(err);
       }
-      res.send({ data: doc });
     });
-  } catch (err) {
-    next(err);
-  }
 };
 // eslint-disable-next-line consistent-return
 const likeCard = async (req, res, next) => {
-  const owner = jwt.verify(req.cookies.jwt, 'some-secret');
   try {
     const id = await Card.findByIdAndUpdate(
       req.params.cardId,
-      { $addToSet: { likes: owner._id } },
+      { $addToSet: { likes: req.user._id } },
       { new: true },
     );
     if (!id) {

@@ -10,15 +10,23 @@ const cardSchema = new mongoose.Schema({
   link: {
     type: String,
     required: true,
+    validate: {
+      validator(v) {
+        return /https?:\/\/w?w?w?\.?[a-z0-9\W]+\.ru\/?[a-z0-9\W]*$/i.test(v);
+      },
+      message: (props) => `${props.value} не прошла валидацию`,
+    },
   },
   owner: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
     required: true,
   },
-  likes: {
-    type: String,
+  likes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
     default: [],
-  },
+  }],
   createdAt: {
     type: Date,
     default: Date.now,

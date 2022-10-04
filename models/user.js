@@ -18,7 +18,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       validate: {
         validator(v) {
-          return /https?:\/\/w?w?w?\.?[a-z0-9\W]/gi.test(v);
+          // eslint-disable-next-line no-useless-escape
+          return /^((ftp|http|https):\/\/)?(www\.)?([A-Za-zА-Яа-я0-9]{1}[A-Za-zА-Яа-я0-9\-]*\.?)*\.{1}[A-Za-zА-Яа-я0-9-]{2,8}(\/([\w#!:.?+=&%@!\-\/])*)?/.test(v);
         },
         message: (props) => `${props.value} не прошла валидацию`,
       },
@@ -32,7 +33,6 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 8,
       select: false,
     },
   },

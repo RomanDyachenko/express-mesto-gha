@@ -6,6 +6,7 @@ const auth = require('./middlewares/auth');
 const users = require('./routes/users');
 const cards = require('./routes/cards');
 const { postNewUser, login } = require('./controllers/users');
+const NotFoundError = require('./errors/NotFoundError');
 
 const { PORT = 3000 } = process.env;
 
@@ -25,50 +26,40 @@ connect();
 
 app.use(cookieParser());
 
-app.use(errors());
-
 app.post('/signup', express.json(), celebrate({
   body: Joi.object().keys({
-    name: Joi.string().min(2).max(30).required(),
-    avatar: Joi.string(),
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+    avatar: Joi.string().pattern(/https?:\/\/w?w?w?\.?[a-z0-9\W]+\.ru\/?[a-z0-9\W]*$/i),
     email: Joi.string().required(),
-    password: Joi.string().required().min(8),
-  }).unknown(true),
+    password: Joi.string().required(),
+  }),
 }), postNewUser);
 
 app.post('/signin', express.json(), celebrate({
   body: Joi.object().keys({
-    name: Joi.string().min(2).max(30).required(),
-    avatar: Joi.string(),
     email: Joi.string().required(),
-    password: Joi.string().required().min(8),
-  }).unknown(true),
+    password: Joi.string().required(),
+  }),
 }), login);
 
-app.use('/users', auth, celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(2).max(30).required(),
-    avatar: Joi.string(),
-    email: Joi.string().required(),
-    password: Joi.string().required().min(8),
-  }).unknown(true),
-}), users);
+app.use('/users', auth, users);
 
-app.use('/cards', auth, celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(2).max(30).required(),
-    link: Joi.string().required(),
-  }).unknown(true),
-}), cards);
+app.use('/cards', auth, cards);
 
-app.use((err, req, res) => {
+app.use((req, res, next) => {
+  next(new NotFoundError('Маршрут не найден'));
+});
+
+app.use(errors());
+
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
 
-  res
-    .status(statusCode)
-    .send({
-      message: statusCode === 500
-        ? 'На сервере произошла ошибка'
-        : message,
-    });
+  res.status(statusCode).send({
+    message: statusCode === 500
+      ? 'На сервере произошла ошибка'
+      : message,
+  });
 });

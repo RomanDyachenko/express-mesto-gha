@@ -4,6 +4,7 @@ const User = require('../models/user');
 const NotFoundError = require('../errors/NotFoundError');
 const BadRequestError = require('../errors/BadRequestError');
 const ConflictError = require('../errors/ConflictError');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 
 const getOwnerInfo = (req, res, next) => {
   User.findById(req.user._id)
@@ -47,13 +48,13 @@ const login = (req, res, next) => {
   User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        throw new BadRequestError('Неправильные почта или пароль');
+        throw new UnauthorizedError('Неправильные почта или пароль');
       }
 
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            throw new BadRequestError('Неправильные почта или пароль');
+            throw new UnauthorizedError('Неправильные почта или пароль');
           }
 
           return user;
@@ -72,11 +73,9 @@ const postNewUser = (req, res, next) => {
     name, about, avatar, email, password,
   } = req.body;
   bcrypt.hash(password, 10)
-    .then((hashedPassword) => {
-      User.create({
-        name, about, avatar, email, password: hashedPassword,
-      });
-    })
+    .then((hashedPassword) => User.create({
+      name, about, avatar, email, password: hashedPassword,
+    }))
     // eslint-disable-next-line no-unused-vars
     .then((user) => {
       res.send({

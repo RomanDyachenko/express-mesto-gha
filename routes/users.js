@@ -30,7 +30,7 @@ router.patch('/me', express.json(), celebrate({
 
 router.patch('/me/avatar', express.json(), celebrate({
   body: {
-    avatar: Joi.string().pattern(/https?:\/\/w?w?w?\.?[a-z0-9\W]+\.ru\/?[a-z0-9\W]*$/i),
+    avatar: Joi.string().pattern(/https?:\/\/w?w?w?\.?[a-z0-9\W]+\.[a-z]+\/?[a-z0-9\W]*$/i),
   },
 }), updateOwnerAvatar);
 

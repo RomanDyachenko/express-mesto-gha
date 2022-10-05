@@ -12,7 +12,7 @@ const cardSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator(v) {
-        return /https?:\/\/w?w?w?\.?[a-z0-9\W]+\.ru\/?[a-z0-9\W]*$/i.test(v);
+        return /https?:\/\/w?w?w?\.?[a-z0-9\W]+\.[a-z]+\/?[a-z0-9\W]*$/i.test(v);
       },
       message: (props) => `${props.value} не прошла валидацию`,
     },

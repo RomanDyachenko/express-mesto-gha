@@ -19,7 +19,7 @@ const deleteCard = async (req, res, next) => {
     if (!card) {
       throw new NotFoundError('Пользователь с данным _id не найден');
     }
-    if (req.user._id !== card.owner) {
+    if ((!card.owner.equals(req.user._id))) {
       const id = await Card.findByIdAndRemove(req.params.id);
       res.send({
         data: id,
